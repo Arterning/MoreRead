@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Note;
 use App\Models\Tag;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class NoteController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Store a new note.
      */
