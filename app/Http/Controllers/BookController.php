@@ -78,7 +78,18 @@ class BookController extends Controller
             'publish_date' => 'nullable|date',
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|max:5120', // 5MB
-            'file' => 'required|file|mimes:pdf,epub,mobi|max:102400', // 100MB
+            'file' => [
+                'required',
+                'file',
+                'max:102400', // 100MB
+                function ($attribute, $value, $fail) {
+                    $allowedExtensions = ['pdf', 'epub', 'mobi'];
+                    $extension = strtolower($value->getClientOriginalExtension());
+                    if (!in_array($extension, $allowedExtensions)) {
+                        $fail('The file must be a PDF, EPUB, or MOBI file.');
+                    }
+                },
+            ],
             'rating' => 'nullable|integer|min:1|max:5',
         ]);
 
