@@ -6,7 +6,7 @@ import { BookOpen, Plus, Search, Filter } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Books', href: '/books' },
+    { title: '书籍', href: '/books' },
 ];
 
 interface Author {
@@ -83,25 +83,34 @@ const getStatusColor = (status: string) => {
     };
     return colors[status as keyof typeof colors] || colors.unread;
 };
+
+const getStatusText = (status: string) => {
+    const statusMap = {
+        unread: '未读',
+        reading: '阅读中',
+        completed: '已完成',
+    };
+    return statusMap[status as keyof typeof statusMap] || status;
+};
 </script>
 
 <template>
-    <Head title="My Books" />
+    <Head title="我的书籍" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-foreground">My Books</h1>
-                    <p class="text-muted-foreground mt-1">Manage your personal library</p>
+                    <h1 class="text-3xl font-bold text-foreground">我的书籍</h1>
+                    <p class="text-muted-foreground mt-1">管理您的个人图书馆</p>
                 </div>
                 <Link
                     href="/books/create"
                     class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                     <Plus class="h-4 w-4" />
-                    Add Book
+                    添加书籍
                 </Link>
             </div>
 
@@ -114,7 +123,7 @@ const getStatusColor = (status: string) => {
                         <input
                             v-model="search"
                             type="text"
-                            placeholder="Search books or authors..."
+                            placeholder="搜索书名或作者..."
                             class="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                             @keyup.enter="filterBooks"
                         />
@@ -126,7 +135,7 @@ const getStatusColor = (status: string) => {
                         class="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         @change="filterBooks"
                     >
-                        <option value="">All Categories</option>
+                        <option value="">所有分类</option>
                         <option v-for="category in categories" :key="category.id" :value="category.id">
                             {{ category.name }}
                         </option>
@@ -138,10 +147,10 @@ const getStatusColor = (status: string) => {
                         class="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         @change="filterBooks"
                     >
-                        <option value="">All Status</option>
-                        <option value="unread">Unread</option>
-                        <option value="reading">Reading</option>
-                        <option value="completed">Completed</option>
+                        <option value="">所有状态</option>
+                        <option value="unread">未读</option>
+                        <option value="reading">阅读中</option>
+                        <option value="completed">已完成</option>
                     </select>
                 </div>
 
@@ -150,12 +159,12 @@ const getStatusColor = (status: string) => {
                     @click="resetFilters"
                     class="text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
                 >
-                    Clear filters
+                    清除筛选
                 </button>
             </div>
 
             <!-- Books Grid -->
-            <div v-if="books.data.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div v-if="books.data.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                 <Link
                     v-for="book in books.data"
                     :key="book.id"
@@ -163,7 +172,7 @@ const getStatusColor = (status: string) => {
                     class="group flex flex-col rounded-lg border border-border bg-card overflow-hidden hover:shadow-lg transition-all duration-200"
                 >
                     <!-- Book Cover -->
-                    <div class="relative aspect-[2/3] bg-muted overflow-hidden">
+                    <div class="relative aspect-[3/4] bg-muted overflow-hidden">
                         <img
                             v-if="book.cover_image"
                             :src="`/storage/covers/${book.cover_image}`"
@@ -184,28 +193,28 @@ const getStatusColor = (status: string) => {
                     </div>
 
                     <!-- Book Info -->
-                    <div class="flex flex-1 flex-col p-4">
-                        <h3 class="font-semibold text-foreground line-clamp-2 mb-1">
+                    <div class="flex flex-1 flex-col p-3">
+                        <h3 class="font-semibold text-sm text-foreground line-clamp-2 mb-1">
                             {{ book.title }}
                         </h3>
-                        <p v-if="book.author" class="text-sm text-muted-foreground mb-2">
+                        <p v-if="book.author" class="text-xs text-muted-foreground mb-2 line-clamp-1">
                             {{ book.author.name }}
                         </p>
 
-                        <div class="mt-auto flex items-center justify-between pt-3">
+                        <div class="mt-auto flex items-center justify-between pt-2">
                             <span
                                 :class="getStatusColor(book.status)"
-                                class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
+                                class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                             >
-                                {{ book.status }}
+                                {{ getStatusText(book.status) }}
                             </span>
                             <span class="text-xs text-muted-foreground uppercase">
                                 {{ book.file_type }}
                             </span>
                         </div>
 
-                        <div v-if="book.rating" class="flex items-center gap-1 mt-2">
-                            <span v-for="i in 5" :key="i" class="text-yellow-500">
+                        <div v-if="book.rating" class="flex items-center gap-0.5 mt-2">
+                            <span v-for="i in 5" :key="i" class="text-yellow-500 text-xs">
                                 {{ i <= book.rating ? '★' : '☆' }}
                             </span>
                         </div>
@@ -216,11 +225,11 @@ const getStatusColor = (status: string) => {
             <!-- Empty State -->
             <div v-else class="flex flex-col items-center justify-center py-12 text-center">
                 <BookOpen class="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 class="text-lg font-semibold text-foreground mb-2">No books found</h3>
+                <h3 class="text-lg font-semibold text-foreground mb-2">未找到书籍</h3>
                 <p class="text-muted-foreground mb-6">
                     {{ filters.search || filters.category_id || filters.status
-                        ? 'Try adjusting your filters'
-                        : 'Start building your library by adding your first book'
+                        ? '尝试调整筛选条件'
+                        : '添加您的第一本书，开始构建您的图书馆'
                     }}
                 </p>
                 <Link
@@ -229,7 +238,7 @@ const getStatusColor = (status: string) => {
                     class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                     <Plus class="h-4 w-4" />
-                    Add Your First Book
+                    添加第一本书
                 </Link>
             </div>
 
