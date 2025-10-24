@@ -169,8 +169,9 @@ class BookController extends Controller
     {
         $this->authorize('update', $book);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
+        // Different validation rules for progress updates vs full updates
+        $rules = [
+            'title' => 'sometimes|required|string|max:255',
             'author_id' => 'nullable|exists:authors,id',
             'category_id' => 'nullable|exists:categories,id',
             'isbn' => 'nullable|string|max:20',
@@ -181,7 +182,9 @@ class BookController extends Controller
             'rating' => 'nullable|integer|min:1|max:5',
             'status' => 'nullable|in:unread,reading,completed',
             'reading_progress' => 'nullable|numeric|min:0|max:100',
-        ]);
+        ];
+
+        $validated = $request->validate($rules);
 
         // Handle cover image upload
         if ($request->hasFile('cover_image')) {
