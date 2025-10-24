@@ -49,7 +49,7 @@ const closeReader = () => {
                 :book-id="book.id"
             />
             <EpubReader
-                v-else-if="book.file_type === 'epub'"
+                v-else-if="book.file_type === 'epub' || book.file_type === 'mobi'"
                 :book-id="book.id"
             />
             <div v-else class="flex items-center justify-center h-full">
