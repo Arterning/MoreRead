@@ -247,6 +247,27 @@ class BookController extends Controller
     }
 
     /**
+     * Update reading progress (API endpoint for auto-save).
+     */
+    public function updateProgress(Request $request, Book $book)
+    {
+        $this->authorize('update', $book);
+
+        $validated = $request->validate([
+            'reading_progress' => 'required|numeric|min:0|max:100',
+            'status' => 'nullable|in:unread,reading,completed',
+        ]);
+
+        $book->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'reading_progress' => $book->reading_progress,
+            'status' => $book->status,
+        ]);
+    }
+
+    /**
      * Generate a text-based cover image from PDF metadata.
      */
     private function generatePdfCover(string $pdfPath, string $fallbackTitle): ?string

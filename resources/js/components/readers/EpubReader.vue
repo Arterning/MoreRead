@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 import ePub, { Book, Rendition, NavItem } from 'epubjs';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, List, Maximize2, X, Palette } from 'lucide-vue-next';
-import { router } from '@inertiajs/vue3';
+import axios from 'axios';
 
 const props = defineProps<{
     bookId: number;
@@ -120,7 +120,6 @@ const loadEpub = async () => {
             const percentage = book.value?.locations.percentageFromCfi(location.start.cfi);
             if (percentage !== undefined) {
                 progress.value = Math.round(percentage * 100);
-                saveProgress(progress.value);
             }
 
             emit('locationChange', location.start.cfi);
@@ -136,9 +135,11 @@ const loadEpub = async () => {
                 const percentage = book.value.locations.percentageFromCfi(currentCfi);
                 if (percentage !== undefined) {
                     progress.value = Math.round(percentage * 100);
-                    saveProgress(progress.value);
                 }
             }
+
+            // Start auto-save timer after locations are generated
+            startAutoSave();
         });
     } catch (err) {
         console.error('Error loading EPUB:', err);
@@ -229,28 +230,37 @@ const goToProgress = (percentage: number) => {
     rendition.value?.display(location);
 };
 
-// Save reading progress to server
-let saveProgressTimer: number | null = null;
-const saveProgress = (progressValue: number) => {
-    // Debounce: wait 2 seconds after user stops reading before saving
-    if (saveProgressTimer) {
-        clearTimeout(saveProgressTimer);
+// Auto-save reading progress every 3 seconds
+let autoSaveTimer: number | null = null;
+let lastSavedProgress = -1;
+
+const startAutoSave = () => {
+    // Clear any existing timer
+    if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
     }
 
-    saveProgressTimer = window.setTimeout(() => {
-        router.put(
-            `/books/${props.bookId}`,
-            {
-                reading_progress: progressValue,
-                status: progressValue > 0 && progressValue < 100 ? 'reading' : (progressValue >= 100 ? 'completed' : 'unread'),
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                only: [],
-            }
-        );
-    }, 2000);
+    // Save progress every 3 seconds
+    autoSaveTimer = window.setInterval(() => {
+        // Only save if progress has changed
+        if (progress.value !== lastSavedProgress) {
+            saveProgressToServer(progress.value);
+        }
+    }, 3000);
+};
+
+const saveProgressToServer = async (progressValue: number) => {
+    lastSavedProgress = progressValue;
+
+    try {
+        await axios.post(`/books/${props.bookId}/progress`, {
+            reading_progress: progressValue,
+            status: progressValue > 0 && progressValue < 100 ? 'reading' : (progressValue >= 100 ? 'completed' : 'unread'),
+        });
+        console.log('Progress saved:', progressValue);
+    } catch (error) {
+        console.error('Failed to save reading progress:', error);
+    }
 };
 
 // Keyboard navigation
@@ -285,6 +295,17 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown);
+
+    // Clear auto-save timer
+    if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+    }
+
+    // Save progress one last time before unmounting
+    if (progress.value !== lastSavedProgress) {
+        saveProgressToServer(progress.value);
+    }
+
     rendition.value?.destroy();
 });
 </script>

@@ -12,6 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('books', BookController::class);
     Route::get('books/{book}/serve', [BookController::class, 'serve'])->name('books.serve');
     Route::get('books/{book}/read', [BookController::class, 'read'])->name('books.read');
+    Route::post('books/{book}/progress', [BookController::class, 'updateProgress'])->name('books.progress');
 
     // Notes
     Route::post('books/{book}/notes', [NoteController::class, 'store'])->name('notes.store');
