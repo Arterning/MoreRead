@@ -216,6 +216,18 @@ class BookController extends Controller
     }
 
     /**
+     * Show the reading page.
+     */
+    public function read(Book $book): Response
+    {
+        $this->authorize('view', $book);
+
+        return Inertia::render('Books/Read', [
+            'book' => $book->load('author'),
+        ]);
+    }
+
+    /**
      * Serve the book file for reading.
      */
     public function serve(Book $book)

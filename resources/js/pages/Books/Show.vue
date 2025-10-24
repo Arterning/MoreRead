@@ -4,8 +4,6 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { BookOpen, Edit, StickyNote, Plus, X, Tag } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
-import PdfReader from '@/components/readers/PdfReader.vue';
-import EpubReader from '@/components/readers/EpubReader.vue';
 
 interface Author {
     id: number;
@@ -61,10 +59,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: props.book.title, href: `/books/${props.book.id}` },
 ];
 
-const showReader = ref(false);
 const showNoteForm = ref(false);
 const editingNote = ref<Note | null>(null);
-const currentPage = ref<number | string>(1);
 
 const noteForm = useForm({
     content: '',
@@ -75,16 +71,8 @@ const noteForm = useForm({
 const newTag = ref('');
 
 const openReader = () => {
-    showReader.value = true;
-};
-
-const closeReader = () => {
-    showReader.value = false;
-};
-
-const handlePageChange = (page: number | string) => {
-    currentPage.value = page;
-    noteForm.page_number = String(page);
+    // Open in new tab
+    window.open(`/books/${props.book.id}/read`, '_blank');
 };
 
 const addTag = () => {
@@ -102,7 +90,6 @@ const openNoteForm = () => {
     showNoteForm.value = true;
     editingNote.value = null;
     noteForm.reset();
-    noteForm.page_number = String(currentPage.value);
 };
 
 const editNote = (note: Note) => {
@@ -164,53 +151,8 @@ const getStatusText = (status: string) => {
     <Head :title="book.title" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <!-- Reading View (Full Screen) -->
-        <div v-if="showReader" class="fixed inset-0 z-50 bg-background">
-            <div class="h-full flex flex-col">
-                <!-- Reader Header -->
-                <div class="flex items-center justify-between border-b border-border px-6 py-4">
-                    <div class="flex-1">
-                        <h2 class="text-lg font-semibold text-foreground">{{ book.title }}</h2>
-                        <p v-if="book.author" class="text-sm text-muted-foreground">{{ book.author.name }}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button
-                            @click="openNoteForm"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90"
-                        >
-                            <Plus class="h-4 w-4" />
-                            添加笔记
-                        </button>
-                        <button
-                            @click="closeReader"
-                            class="p-2 hover:bg-accent rounded-lg"
-                        >
-                            <X class="h-5 w-5" />
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Reader Component -->
-                <div class="flex-1 p-6">
-                    <PdfReader
-                        v-if="book.file_type === 'pdf'"
-                        :book-id="book.id"
-                        @page-change="handlePageChange"
-                    />
-                    <EpubReader
-                        v-else-if="book.file_type === 'epub'"
-                        :book-id="book.id"
-                        @location-change="handlePageChange"
-                    />
-                    <div v-else class="flex items-center justify-center h-full">
-                        <p class="text-muted-foreground">不支持的文件格式: {{ book.file_type }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Book Details View -->
-        <div v-else class="flex h-full flex-1 flex-col gap-6 p-6 max-w-6xl mx-auto">
+        <div class="flex h-full flex-1 flex-col gap-6 p-6 max-w-6xl mx-auto">
             <!-- Header Actions -->
             <div class="flex items-center justify-between">
                 <h1 class="text-3xl font-bold text-foreground">{{ book.title }}</h1>
