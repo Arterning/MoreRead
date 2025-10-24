@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 import ePub, { Book, Rendition, NavItem } from 'epubjs';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, List, Maximize2, X } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, List, Maximize2, X, Palette } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 
 const props = defineProps<{
@@ -24,6 +24,42 @@ const fontSize = ref(100);
 const showToc = ref(false);
 const toc = ref<NavItem[]>([]);
 const isDraggingProgress = ref(false);
+const showThemeMenu = ref(false);
+
+// Reading themes
+type Theme = 'default' | 'dark' | 'green' | 'sepia';
+
+const readingTheme = ref<Theme>((localStorage.getItem('readingTheme') as Theme) || 'default');
+
+const themes = {
+    default: {
+        name: '默认',
+        background: '#ffffff',
+        color: '#000000',
+    },
+    dark: {
+        name: '暗色',
+        background: '#1a1a1a',
+        color: '#e5e5e5',
+    },
+    green: {
+        name: '护眼绿',
+        background: '#c7edcc',
+        color: '#1b5e20',
+    },
+    sepia: {
+        name: '复古',
+        background: '#f4ecd8',
+        color: '#5d4037',
+    },
+};
+
+const setTheme = (theme: Theme) => {
+    readingTheme.value = theme;
+    localStorage.setItem('readingTheme', theme);
+    showThemeMenu.value = false;
+    updateTheme();
+};
 
 const loadEpub = async () => {
     try {
@@ -132,15 +168,10 @@ const decreaseFontSize = () => {
 const updateTheme = () => {
     rendition.value?.themes.fontSize(`${fontSize.value}%`);
 
-    // Apply dark mode if active
-    const isDark = document.documentElement.classList.contains('dark');
-    if (isDark) {
-        rendition.value?.themes.override('color', '#e5e5e5');
-        rendition.value?.themes.override('background', '#1a1a1a');
-    } else {
-        rendition.value?.themes.override('color', '#000');
-        rendition.value?.themes.override('background', '#fff');
-    }
+    // Apply selected reading theme
+    const currentTheme = themes[readingTheme.value];
+    rendition.value?.themes.override('color', currentTheme.color);
+    rendition.value?.themes.override('background', currentTheme.background);
 };
 
 const toggleFullscreen = () => {
@@ -250,15 +281,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 onMounted(() => {
     loadEpub();
     window.addEventListener('keydown', handleKeyDown);
-
-    // Watch for dark mode changes
-    const observer = new MutationObserver(() => {
-        updateTheme();
-    });
-    observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-    });
 });
 
 onUnmounted(() => {
@@ -360,6 +382,39 @@ onUnmounted(() => {
                     >
                         <ZoomIn class="h-5 w-5" />
                     </button>
+
+                    <div class="h-4 w-px bg-border mx-2" />
+
+                    <!-- Theme Selector -->
+                    <div class="relative">
+                        <button
+                            @click="showThemeMenu = !showThemeMenu"
+                            class="p-2 rounded-md hover:bg-accent transition-colors"
+                            title="阅读主题"
+                        >
+                            <Palette class="h-5 w-5" />
+                        </button>
+
+                        <!-- Theme Menu -->
+                        <div
+                            v-if="showThemeMenu"
+                            class="absolute right-0 top-full mt-2 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[120px] z-50"
+                        >
+                            <button
+                                v-for="(theme, key) in themes"
+                                :key="key"
+                                @click="setTheme(key as Theme)"
+                                class="w-full px-4 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center justify-between"
+                                :class="{ 'bg-accent': readingTheme === key }"
+                            >
+                                <span>{{ theme.name }}</span>
+                                <span
+                                    class="w-4 h-4 rounded-full border border-border"
+                                    :style="{ backgroundColor: theme.background }"
+                                />
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="h-4 w-px bg-border mx-2" />
 
