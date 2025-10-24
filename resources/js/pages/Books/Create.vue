@@ -49,6 +49,10 @@ const newCategoryName = ref('');
 const showNewAuthorInput = ref(false);
 const showNewCategoryInput = ref(false);
 
+// Drag and drop states
+const isDraggingBookFile = ref(false);
+const isDraggingCoverImage = ref(false);
+
 // Watch for file changes and auto-fill title
 watch(() => form.file, (file) => {
     if (file && !form.title) {
@@ -90,6 +94,59 @@ const removeCoverImage = () => {
     coverImagePreview.value = '';
     if (coverImageInput.value) {
         coverImageInput.value.value = '';
+    }
+};
+
+// Drag and drop handlers for book file
+const handleBookFileDragOver = (event: DragEvent) => {
+    event.preventDefault();
+    isDraggingBookFile.value = true;
+};
+
+const handleBookFileDragLeave = () => {
+    isDraggingBookFile.value = false;
+};
+
+const handleBookFileDrop = (event: DragEvent) => {
+    event.preventDefault();
+    isDraggingBookFile.value = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+        const file = files[0];
+        const validExtensions = ['pdf', 'epub', 'mobi'];
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+        if (fileExtension && validExtensions.includes(fileExtension)) {
+            form.file = file;
+        } else {
+            alert('Please upload a PDF, EPUB, or MOBI file');
+        }
+    }
+};
+
+// Drag and drop handlers for cover image
+const handleCoverImageDragOver = (event: DragEvent) => {
+    event.preventDefault();
+    isDraggingCoverImage.value = true;
+};
+
+const handleCoverImageDragLeave = () => {
+    isDraggingCoverImage.value = false;
+};
+
+const handleCoverImageDrop = (event: DragEvent) => {
+    event.preventDefault();
+    isDraggingCoverImage.value = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+            form.cover_image = file;
+        } else {
+            alert('Please upload an image file');
+        }
     }
 };
 
@@ -171,7 +228,11 @@ const submit = () => {
                     </label>
                     <div
                         @click="bookFileInput?.click()"
-                        class="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary cursor-pointer transition-colors"
+                        @dragover="handleBookFileDragOver"
+                        @dragleave="handleBookFileDragLeave"
+                        @drop="handleBookFileDrop"
+                        class="relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all"
+                        :class="isDraggingBookFile ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary'"
                     >
                         <input
                             ref="bookFileInput"
@@ -180,13 +241,13 @@ const submit = () => {
                             class="hidden"
                             @change="handleBookFileChange"
                         />
-                        <Upload class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <p v-if="!bookFilePreview" class="text-sm text-muted-foreground">
-                            Click to upload PDF, EPUB, or MOBI file<br />
-                            <span class="text-xs">Maximum file size: 100MB</span>
+                        <Upload class="mx-auto h-12 w-12 mb-4 transition-colors" :class="isDraggingBookFile ? 'text-primary' : 'text-muted-foreground'" />
+                        <p v-if="!bookFilePreview" class="text-sm transition-colors" :class="isDraggingBookFile ? 'text-primary font-medium' : 'text-muted-foreground'">
+                            {{ isDraggingBookFile ? '松开以上传文件' : 'Click to upload or drag & drop' }}<br />
+                            <span class="text-xs">PDF, EPUB, or MOBI • Maximum 100MB</span>
                         </p>
                         <p v-else class="text-sm text-foreground font-medium">
-                            {{ bookFilePreview }}
+                            📄 {{ bookFilePreview }}
                         </p>
                     </div>
                     <p v-if="form.errors.file" class="mt-2 text-sm text-destructive">{{ form.errors.file }}</p>
@@ -316,12 +377,16 @@ const submit = () => {
                 <!-- Cover Image Upload -->
                 <div>
                     <label class="block text-sm font-medium text-foreground mb-2">
-                        Cover Image
+                        Cover Image (可选，如不上传将自动生成)
                     </label>
                     <div v-if="!coverImagePreview" class="space-y-2">
                         <div
                             @click="coverImageInput?.click()"
-                            class="relative border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary cursor-pointer transition-colors"
+                            @dragover="handleCoverImageDragOver"
+                            @dragleave="handleCoverImageDragLeave"
+                            @drop="handleCoverImageDrop"
+                            class="relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all"
+                            :class="isDraggingCoverImage ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary'"
                         >
                             <input
                                 ref="coverImageInput"
@@ -330,9 +395,9 @@ const submit = () => {
                                 class="hidden"
                                 @change="handleCoverImageChange"
                             />
-                            <Upload class="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                            <p class="text-sm text-muted-foreground">
-                                Click to upload cover image (optional)
+                            <Upload class="mx-auto h-8 w-8 mb-2 transition-colors" :class="isDraggingCoverImage ? 'text-primary' : 'text-muted-foreground'" />
+                            <p class="text-sm transition-colors" :class="isDraggingCoverImage ? 'text-primary font-medium' : 'text-muted-foreground'">
+                                {{ isDraggingCoverImage ? '松开以上传封面' : 'Click to upload or drag & drop cover image' }}
                             </p>
                         </div>
                     </div>
