@@ -10,7 +10,7 @@ import AppLogo from './AppLogo.vue';
 
 const mainNavItems = [
     {
-        title: 'Dashboard',
+        title: '首页',
         url: '/dashboard',
         icon: LayoutGrid,
     },

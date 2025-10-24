@@ -8,7 +8,15 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
+    $user = auth()->user();
+
+    $stats = [
+        'totalBooks' => $user->books()->count(),
+        'readBooks' => $user->books()->where('status', 'completed')->count(),
+        'totalNotes' => $user->books()->withCount('notes')->get()->sum('notes_count'),
+    ];
+
+    return Inertia::render('Dashboard', ['stats' => $stats]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/books.php';
