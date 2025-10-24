@@ -8,20 +8,20 @@ import { Link } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Library, Upload } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
-const mainNavItems: NavItem[] = [
+const mainNavItems = [
     {
         title: 'Dashboard',
-        href: '/dashboard',
+        url: '/dashboard',
         icon: LayoutGrid,
     },
     {
         title: '我的书籍',
-        href: '/books',
+        url: '/books',
         icon: Library,
     },
     {
         title: '上传书籍',
-        href: '/books/create',
+        url: '/books/create',
         icon: Upload,
     },
 ];
